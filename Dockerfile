@@ -34,8 +34,6 @@ RUN set -ex \
         liblapack-dev \
         libpq-dev \
         git \
-        libaio1 \
-        libaio-dev \
         freetds-dev \
     ' \
     && apt-get update -yqq \
@@ -54,6 +52,7 @@ RUN set -ex \
         locales \
         freetds-bin \
         unzip \
+        vim \
     && sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen \
     && locale-gen \
     && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
@@ -66,6 +65,8 @@ RUN set -ex \
     && pip install pyasn1 \
     && pip install apache-airflow[all]==$AIRFLOW_VERSION \
     && pip install celery[redis]==4.0.2 \
+    && pip install cx_oracle \
+    && pip install lifetimes \
     && apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
     && apt-get clean \
@@ -76,16 +77,12 @@ RUN set -ex \
         /usr/share/man \
         /usr/share/doc \
         /usr/share/doc-base
+### Oralce install taken from https://github.com/marcusrehm/airflow-dev-env/blob/master/Dockerfile ###
 
-###Install Oracle Client (taken from https://github.com/EamonKeane/docker-stacks/blob/master/scipy-notebook/Dockerfile)
-COPY instantclient_12_2.zip /home/
-RUN unzip /home/instantclient_12_2.zip -d /home/
-
-ENV LD_LIBRARY_PATH=/home/instantclient_12_2
-ENV PATH=/home/instantclient_12_2:${PATH}
-ENV SQLPATH=/home/instantclient_12_2:${SQLPATH}
-
-#### End Oracle ####
+RUN apt-get update && apt-get install libaio-dev -y \
+    libaio1 \
+    libaio-dev
+###
 
 COPY script/entrypoint.sh /entrypoint.sh
 COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
@@ -93,6 +90,22 @@ COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 RUN chown -R airflow: ${AIRFLOW_HOME}
 
 EXPOSE 8080 5555 8793
+
+
+### Oralce install taken from https://github.com/marcusrehm/airflow-dev-env/blob/master/Dockerfile ###
+RUN mkdir -p opt/oracle
+COPY instantclient_12_2.zip /opt/oracle
+RUN cd /opt/oracle && unzip instantclient_12_2.zip
+RUN mv /opt/oracle/instantclient_12_2 /opt/oracle/instantclient
+RUN ln -s /opt/oracle/instantclient/libclntsh.so.12.1 /opt/oracle/instantclient/libclntsh.so
+RUN ln -s /opt/oracle/instantclient/libocci.so.12.1 /opt/oracle/instantclient/libocci.so
+ENV ORACLE_HOME="/opt/oracle/instantclient"
+ENV OCI_HOME="/opt/oracle/instantclient"
+ENV OCI_LIB_DIR="/opt/oracle/instantclient"
+ENV OCI_INCLUDE_DIR="/opt/oracle/instantclient/sdk/include"
+ENV LD_LIBRARY_PATH="/opt/oracle/instantclient:$ORACLE_HOME"
+RUN echo '/opt/oracle/instantclient/' | tee -a /etc/ld.so.conf.d/oracle_instant_client.conf && ldconfig
+###
 
 USER airflow
 WORKDIR ${AIRFLOW_HOME}
