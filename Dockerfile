@@ -34,6 +34,8 @@ RUN set -ex \
         liblapack-dev \
         libpq-dev \
         git \
+        libaio1 \
+        libaio-dev \
     ' \
     && apt-get update -yqq \
     && apt-get upgrade -yqq \
@@ -71,6 +73,16 @@ RUN set -ex \
         /usr/share/man \
         /usr/share/doc \
         /usr/share/doc-base
+
+###Install Oracle Client (taken from https://github.com/EamonKeane/docker-stacks/blob/master/scipy-notebook/Dockerfile)
+COPY instantclient_12_2.zip /home/
+RUN unzip /home/instantclient_12_2.zip -d /home/
+
+ENV LD_LIBRARY_PATH=/home/instantclient_12_2
+ENV PATH=/home/instantclient_12_2:${PATH}
+ENV SQLPATH=/home/instantclient_12_2:${SQLPATH}
+
+#### End Oracle ####
 
 COPY script/entrypoint.sh /entrypoint.sh
 COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
