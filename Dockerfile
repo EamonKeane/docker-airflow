@@ -67,6 +67,7 @@ RUN set -ex \
     && pip install celery[redis]==4.0.2 \
     && pip install cx_oracle \
     && pip install lifetimes \
+    && pip install datalab \
     && apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
     && apt-get clean \
