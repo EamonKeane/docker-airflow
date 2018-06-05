@@ -72,7 +72,8 @@ RUN set -ex \
 
 RUN apt-get update && apt-get install libaio-dev -y \
     libaio1 \
-    libaio-dev
+    libaio-dev \
+    unzip
 ###
 ### Oralce install taken from https://github.com/marcusrehm/airflow-dev-env/blob/master/Dockerfile ###
 RUN mkdir -p opt/oracle
