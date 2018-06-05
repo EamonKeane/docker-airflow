@@ -68,6 +68,27 @@ RUN set -ex \
         /usr/share/doc \
         /usr/share/doc-base
 
+### Oralce install taken from https://github.com/marcusrehm/airflow-dev-env/blob/master/Dockerfile ###
+
+RUN apt-get update && apt-get install libaio-dev -y \
+    libaio1 \
+    libaio-dev
+###
+### Oralce install taken from https://github.com/marcusrehm/airflow-dev-env/blob/master/Dockerfile ###
+RUN mkdir -p opt/oracle
+COPY instantclient_12_2.zip /opt/oracle
+RUN cd /opt/oracle && unzip instantclient_12_2.zip
+RUN mv /opt/oracle/instantclient_12_2 /opt/oracle/instantclient
+RUN ln -s /opt/oracle/instantclient/libclntsh.so.12.1 /opt/oracle/instantclient/libclntsh.so
+RUN ln -s /opt/oracle/instantclient/libocci.so.12.1 /opt/oracle/instantclient/libocci.so
+ENV ORACLE_HOME="/opt/oracle/instantclient"
+ENV OCI_HOME="/opt/oracle/instantclient"
+ENV OCI_LIB_DIR="/opt/oracle/instantclient"
+ENV OCI_INCLUDE_DIR="/opt/oracle/instantclient/sdk/include"
+ENV LD_LIBRARY_PATH="/opt/oracle/instantclient:$ORACLE_HOME"
+RUN echo '/opt/oracle/instantclient/' | tee -a /etc/ld.so.conf.d/oracle_instant_client.conf && ldconfig
+###
+
 COPY script/entrypoint.sh /entrypoint.sh
 COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 
